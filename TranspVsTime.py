@@ -36,3 +36,11 @@ plt.title("Normalized mean transparency vs time")
 plt.show()
 
 #faccio il plot per il singolo fill
+fill_num = df_unico.fill_num.unique()
+for k in fill_num:
+    df = df_unico[df_unico.fill_num == k]
+    df.plot(kind='line', x='time', y='trasparenza')
+    plt.xlabel("Time  [days]")
+    plt.ylabel("Normalized mean transparency")
+    plt.title(f"Fill numero {k}")
+    plt.show()
