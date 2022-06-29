@@ -1,5 +1,4 @@
 # multivariate data preparation
-from pickle import TRUE
 import numpy as np
 import pandas as pd
 from numpy import array
@@ -9,7 +8,8 @@ from keras.layers import LSTM
 from keras.layers import Bidirectional
 from keras.layers import Dense
 import matplotlib.pyplot as plt
-from keras import optimizers
+#from keras import optimizers
+from keras.callbacks import EarlyStopping
 #import tensorflow as tf
 
 #preparo il numpy array time
@@ -83,19 +83,17 @@ for i in range(5):
 n_features = 7
 model = Sequential()
 model.add(Bidirectional(LSTM(128, activation='tanh', return_sequences=True), input_shape=(n_steps, n_features)))
-model.add(Bidirectional(LSTM(16, activation='tanh', return_sequences=True)))
-model.add(Bidirectional(LSTM(8, activation='tanh')))
-model.add(Dense(1, activation='sigmoid'))
+model.add(Bidirectional(LSTM(64, activation='tanh', return_sequences=True)))
+model.add(Bidirectional(LSTM(32, activation='tanh')))
+model.add(Dense(1, activation='relu'))
 
 #compilo il modello
 from tensorflow import keras
 opt = keras.optimizers.Adam(learning_rate = 0.0001)
 model.compile(optimizer=opt, loss='mean_squared_error', metrics=["accuracy"])
-"""model.compile(
-    loss='mean_squared_error',      #specifico la loss function
-    optimizer='adam',               #specifico l'ottimizzatore (stochastic gradient descent)
-    #metrics=["accuracy"],          #specifico la metrica
-)"""
+
+#definisco earlystopping
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
 
 #alleno il modello
 """model.fit(
@@ -105,7 +103,7 @@ model.fit(
     x_train, y_train, validation_data=(x_validate, y_validate), batch_size=64, epochs=10
 )"""
 
-model.fit(x_train, y_train, epochs=3)
+model.fit(x_train, y_train, validation_split=0.15, batch_size=64, epochs=100, callbacks=[es])	#divide in automatico i dati di train in train e validation
 #testo il modello
 predictions = model.predict(x_test, verbose=0)
 print("Risultati: ")
@@ -154,9 +152,9 @@ for k in (fill_nums):
 	new_df = dataframe[dataframe.fill_num == k]
 	#new_df.plot(kind='scatter', x='time', y='predictions')
 	#new_df.plot(kind='scatter', x='time', y='test')
-	new_df[['predictions','test']].plot()
-	#plt.scatter(new_df['time'], new_df['predictions'])
-	#plt.scatter(new_df['time'], new_df['test'])
+	new_df[['predictions','test']].plot(markersize=3, linewidth=0.75)
+	#plt.plot(new_df['time'], new_df['predictions'], markersize=3, linewidth=0.75)
+	#plt.plot(new_df['time'], new_df['test'], markersize=3, linewidth=0.75)
 	plt.xlabel("Time [days]")
 	plt.ylabel("Normalized mean transparency")
 	plt.title(f"Predictions vs test   -   Fill {k}")
