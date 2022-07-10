@@ -20,8 +20,9 @@ escludi = [5697, 5698, 5699, 5704, 5710, 5718, 5719, 5722, 5733, 5736, 5738, 573
            5933, 5946, 5952, 5954, 5960, 5965, 5970, 5971, 5974, 5985, 6001, 6005, 6006, 6012, 6015, 6016, 6018, 6019, 
            6021, 6034, 6036, 6039, 6041, 6047, 6055, 6057, 6072, 6123, 6130, 6132, 6141, 6146, 6155, 6164, 6173, 6179, 
            6180, 6183, 6184, 6185, 6192, 6194, 6195, 6199, 6200, 6201, 6216, 6217, 6226, 6227, 6228, 6230, 6231, 6232, 
-           6233, 6236, 6238, 6261, 6293, 6294, 6295, 6309, 6336, 6341, 6349, 6351, 6355, 6358, 6374, 6377, 6380, 6381, 
-           6382, 6387, 6388, 6399, 6402, 6404, 6405, 6411, 6413, 6415, 6417, 6431]
+           6233, 6236, 6238, 6261, 6293, 6294, 6295, 6309, 6313, 6318, 6336, 6337, 6341, 6344, 6347, 6348, 6349, 6351, 
+           6355, 6358, 6370, 6374, 6377, 6380, 6381, 6382, 6385, 6387, 6388, 6396, 6399, 6402, 6404, 6405, 6411, 6413, 
+           6415, 6417, 6431, 6434]
 for k in escludi:
     df_dati=df_dati.drop(df_dati[df_dati.fill_num==k].index)
 
@@ -54,7 +55,7 @@ fill_nums = df_dati.fill_num.unique()
 dataframe = pd.DataFrame()
 for k in (fill_nums):
     new_df = df_dati[df_dati.fill_num == k]
-    massimo_trasp = new_df['trasparenza'].max()
+    massimo_trasp = new_df.trasparenza.iloc[0]
     minimo_trasp = new_df['trasparenza'].min()
     new_df.trasparenza = new_df.trasparenza / massimo_trasp
     #new_df.trasparenza = (new_df.trasparenza - minimo_trasp) / (massimo_trasp - minimo_trasp)
@@ -98,11 +99,11 @@ massimo = dataframe['time'].max()
 minimo = dataframe['time'].min()
 dataframe.time = (dataframe.time - minimo) / (massimo - minimo)
 
-"""plt.plot(dataframe.trasparenza)
+plt.scatter(dataframe.time, dataframe.trasparenza)
 plt.title("Trasparenza")
 plt.show()
 
-plt.plot(dataframe.time_in_fill)
+"""plt.plot(dataframe.time_in_fill)
 plt.title("time_in_fill")
 plt.show()
 
@@ -148,6 +149,23 @@ time.set_index('time', drop = False, inplace = True)
 print("time")
 print(time)
 time.to_csv('/home/marta/python/7-LSTM_prova2/time.csv')
+
+#faccio un file csv con solo i dati del numero di fill
+fill_n = dataframe.copy()
+#time.set_index('indice', drop = False, inplace = True)
+fill_n.drop(['lumi_inst'], axis = 1, inplace = True)
+fill_n.drop(['lumi_int'], axis = 1, inplace = True)
+fill_n.drop(['time_in_fill'], axis = 1, inplace = True)
+fill_n.drop(['lumi_since_last_point'], axis = 1, inplace = True)
+#fill_n.drop(['time'], axis = 1, inplace = True)
+fill_n.drop(['lumi_in_fill'], axis = 1, inplace = True)
+fill_n.drop(['lumi_last_fill'], axis = 1, inplace = True)
+fill_n.drop(['trasparenza'], axis = 1, inplace = True)
+#time.drop(['trasp_preced'], axis = 1, inplace = True)
+fill_n.set_index('time', drop = True, inplace = True)
+print("fill_n")
+print(fill_n)
+fill_n.to_csv('/home/marta/python/7-LSTM_prova2/fill_n.csv')
 
 #definisco la colonna time come indice
 #df_dati.set_index('time', drop = True, inplace = True)
