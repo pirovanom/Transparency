@@ -20,23 +20,31 @@ from keras import activations
 from keras import layers
 from keras import backend as K
 
-#preparo il numpy array time
+#preparo il numpy array time (servirà alla fine)
 time = list()
 time = read_csv('/home/marta/python/7-LSTM_prova2/time.csv', header=0, index_col=0)
 righe_time = len(time.index)
 print("righe time: ", righe_time)
 
-# definisco i dati di input in un dataframe, che convertirò in un numpy array con 8 colonne, tante sono le features
-df = read_csv('/home/marta/python/7-LSTM_prova2/input_data.csv', header=0, index_col=0)
+#preparo il numpy array fill_numbers (servirà alla fine)
+fill_numbers = list()
+fill_numbers = read_csv('/home/marta/python/7-LSTM_prova2/fill_n.csv', header=0, index_col=0)
+righe_fill_numbers = len(fill_numbers.index)
+print("righe righe_fill_numbers: ", righe_fill_numbers)
+
+# definisco i dati di input in un dataframe, che convertirò in un numpy array tante colonne, quante sono le features
+df = read_csv('/home/marta/python/7-LSTM_prova2/input_data.csv', header=0, index_col=0, usecols = [0, 1, 2, 3, 4, 7, 8])
+#print(df)
 #scalo i dati di trasparenza
 massimo_trasp = df['trasparenza'].max()
 minimo_trasp = df['trasparenza'].min()
-df.trasparenza = (df.trasparenza - minimo_trasp) / (massimo_trasp - minimo_trasp)
+minimo_trasp = minimo_trasp - 0.001
+df.trasparenza = (df.trasparenza - minimo_trasp) / (1 - minimo_trasp)
 #scalo i dati di fill
-massimo_fill = df['fill_num'].max()
+"""massimo_fill = df['fill_num'].max()
 minimo_fill = df['fill_num'].min()
-df.fill_num = (df.fill_num - minimo_fill) / (massimo_fill - minimo_fill)
-#plt.plot(df)
+df.fill_num = (df.fill_num - minimo_fill) / (massimo_fill - minimo_fill)"""
+#plt.plot(df.trasparenza)
 #plt.show()
 
 #divido i dati di train e di test in nuovi dataframe
@@ -92,27 +100,26 @@ print("X_test.shape:  ", x_test.shape, "   y_test.shape:  ", y_test.shape)
 print("")
 
 # definisco il modello
-n_features = 7
+n_features = 5
 model = Sequential()
 #def clipped_relu(x):
 #clip_relu = activations.relu(x_train, alpha=0.0, max_value = 1, threshold=0.0)
 #model.add(layers.Activation(clip_relu))
 #clipped_relu = activations.relu(x_train, max_value=1.0)
 #activations.relu(x_train, alpha=0.0, max_value = 1, threshold=0.0)"""
-def clip_relu(x, max_value=1.):
-	return activations.relu(x, max_value = 1.0)
-model.add(Bidirectional(LSTM(128, activation='tanh', return_sequences=True), input_shape=(n_steps, n_features)))
-model.add(Bidirectional(LSTM(64, activation='tanh', return_sequences=True)))
+def clip_relu(x):
+	return activations.relu(x, max_value = 1.01)
+model.add(Bidirectional(LSTM(64, activation='tanh', return_sequences=True), input_shape=(n_steps, n_features)))
 model.add(Bidirectional(LSTM(32, activation='tanh')))
 model.add(Dense(1, activation=clip_relu))
 
 #compilo il modello
 from tensorflow import keras
 opt = keras.optimizers.Adam(learning_rate = 0.0001)
-model.compile(optimizer=opt, loss='mean_squared_error', metrics=["accuracy"])
+model.compile(optimizer=opt, loss='mean_squared_error')
 
 #definisco earlystopping
-es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30)
 
 #alleno il modello
 """model.fit(
@@ -125,12 +132,27 @@ model.fit(
 history = model.fit(x_train, y_train, validation_split=0.15, batch_size=64, epochs=60, callbacks=[es])	#divide in automatico i dati di train in train e validation
 
 #testo il modello
+pred_train = model.predict(x_train, verbose=0)
 predictions = model.predict(x_test, verbose=0)
 
 #riscalo i dati
+diff_test = list()
+diff_train = list()
+predictions = predictions.reshape(1891)
+pred_train = pred_train.reshape(7568)
+print(predictions.shape)
+print(y_test.shape)
+print(predictions)
+print(y_test)
 for i in range (len(predictions)):
-	predictions[i] = minimo_trasp + (predictions[i] * (massimo_trasp - minimo_trasp))
-	y_test[i] = minimo_trasp + (y_test[i] * (massimo_trasp - minimo_trasp))
+	predictions[i] = minimo_trasp + (predictions[i] * (1 - minimo_trasp))
+	y_test[i] = minimo_trasp + (y_test[i] * (1 - minimo_trasp))
+	#diff_test[i] = predictions[i] - y_test[i]
+for i in range (len(y_train)):
+	pred_train[i] = minimo_trasp + (pred_train[i] * (1 - minimo_trasp))
+	y_train[i] = minimo_trasp + (y_train[i] * (1 - minimo_trasp))
+	#diff_train[i] = pred_train[i] - y_train[i]
+
 
 # stampo i risultati e li salvo in un file di output
 print("Risultati: ")
@@ -147,12 +169,14 @@ dataframe=dataframe.assign(test = 0)
 dataframe.test= pd.DataFrame(y_test)
 dataframe.columns = ['time', 'predictions', 'test']
 dataframe.set_index('time', drop = False, inplace = True)
-dataframe.to_csv('/home/marta/python/7-LSTM_prova2/output.csv')
 dataframe = dataframe.merge(df, how='inner', left_index=True, right_index=True)
+dataframe = dataframe.merge(fill_numbers, how='inner', left_index=True, right_index=True)
 #print(type(df))
 #print(df)
-#print("Dataframe finale")
-#print(dataframe)
+print("Dataframe finale")
+print(dataframe)
+dataframe.to_csv('/home/marta/python/7-LSTM_prova2/output.csv')
+
 
 #faccio il grafico con tutti i dati: train, test e predictions
 """plt.figure(figsize=(12,6))
@@ -169,12 +193,28 @@ plt.show()"""
 # faccio il grafico test vs predictions
 plt.figure(figsize=(12,6))
 plt.scatter(time_test, y_test, label="Test")
-plt.scatter(time_test, predictions, label="Predictions")	
+plt.scatter(time_test, predictions, label="Predictions")
+plt.scatter(time_train, y_train, label="Train")	
+plt.scatter(time_train, pred_train, label="Train predictions")
 #plt.scatter(time_test, confronto, label="Confronto")
 plt.xlabel("Time [days]")
 plt.ylabel("Normalized mean transparency")
 plt.title(f"Predictions vs test")
-legend = plt.legend(['Test', 'Predictions', 'confronto'], title = "Legend")
+legend = plt.legend(['Test', 'Predictions', 'Train', 'Train predictions'], title = "Legend")
+plt.savefig("/home/marta/python/7-LSTM_prova2/Predictions_vs_Test.png")
+plt.show()
+
+# faccio il grafico delle differenze
+#print(time_test.shape)
+#print(diff_test.shape)
+plt.figure(figsize=(12,6))
+plt.scatter(time_test, predictions - y_test, label="Test")
+plt.scatter(time_train, pred_train - y_train, label="Train")	
+#plt.scatter(time_test, confronto, label="Confronto")
+plt.xlabel("Time [days]")
+plt.ylabel("Normalized mean transparency")
+plt.title(f"Predictions vs test")
+legend = plt.legend(['Test', 'Train'], title = "Legend")
 plt.savefig("/home/marta/python/7-LSTM_prova2/Predictions_vs_Test.png")
 plt.show()
 
@@ -190,7 +230,7 @@ plt.savefig(f"/home/marta/python/7-LSTM_prova2/Loss_logScale.png")
 plt.show()
 
 # faccio il plot per singolo fill
-dataframe.fill_num = minimo_fill + (dataframe.fill_num * (massimo_fill - minimo_fill))
+#dataframe.fill_num = minimo_fill + (dataframe.fill_num * (massimo_fill - minimo_fill))
 fill_nums = dataframe.fill_num.unique()
 for k in (fill_nums):
 	new_df = dataframe[dataframe.fill_num == k]
