@@ -22,6 +22,7 @@ from keras import activations
 from keras import layers
 from keras import backend as K
 import datetime
+import matplotlib.dates as mdates
 
 #preparo il numpy array time (servirà alla fine)
 time = list()
@@ -39,12 +40,38 @@ print("righe righe_fill_numbers: ", righe_fill_numbers)
 # definisco i dati di input in un dataframe, che convertirò in un numpy array tante colonne, quante sono le features
 df = read_csv('/home/marta/python/7-LSTM_prova2/input_data.csv', header=0, index_col=0, usecols = [0, 1, 2, 3, 4, 7, 8])
 #print(df)
+
+locator = mdates.AutoDateLocator()
+formatter = mdates.ConciseDateFormatter(locator)
+formatter.formats = ['%y',  # ticks are mostly years
+					'%b',       # ticks are mostly months
+					'%d',       # ticks are mostly days
+					'%H:%M',    # hrs
+					'%H:%M',    # min
+					'%S.%f', ]  # secs
+formatter.zero_formats = [''] + formatter.formats[:-1]
+    # ...except for ticks that are mostly hours, then it is nice to have
+    # month-day:
+formatter.zero_formats[3] = '%d-%b'
+
+formatter.offset_formats = ['',
+	                        '%Y',
+                            '%b %Y',
+                            '%d %b %Y',
+                            '%d %b %Y',
+                            '%d %b %Y %H:%M', ]
+
 """df.index = [datetime.datetime.fromtimestamp(ts) for ts in df.index]
-plt.plot(df.trasparenza, ".r-", markersize=3, linewidth=0.75, label="Predictions")
+
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(locator)
+
+plt.plot_date(df.index, df.trasparenza, ".r-", markersize=3, linewidth=0.75, label="Predictions")
 plt.xlabel("Time")
-#plt.xticks(rotation='45')
+plt.xticks(rotation='90')
 plt.ylabel("Transparency")
 plt.title(f"Transparency data - zoom")
+plt.gcf().autofmt_xdate()
 plt.show()"""
 
 #scalo i dati di trasparenza
@@ -122,11 +149,12 @@ opt = keras.optimizers.Adam(learning_rate = 0.0001)
 model.compile(optimizer=opt, loss='mean_squared_error')
 
 #definisco earlystopping
-es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=30)
+es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=100)
+#es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=20)
 
 #alleno il modello
 
-history = model.fit(x_train, y_train, validation_split=0.15, batch_size=64, epochs=60, callbacks=[es])	#divide in automatico i dati di train in train e validation
+history = model.fit(x_train, y_train, validation_split=0.15, batch_size=64, epochs=1000, callbacks=[es])	#divide in automatico i dati di train in train e validation
 
 #testo il modello
 pred_train = model.predict(x_train, verbose=0)
@@ -249,12 +277,92 @@ plt.show()
 fill_nums = dataframe.fill_num.unique()
 for k in (fill_nums):
 	new_df = dataframe[dataframe.fill_num == k]
+	plt.gca().xaxis.set_major_formatter(formatter)
+	plt.gca().xaxis.set_major_locator(locator)
 	plt.plot(new_df.time, new_df.predictions, ".b-", markersize=3, linewidth=0.75, label="Predictions")
 	plt.plot(new_df.time, new_df.test, ".g-", markersize=3, linewidth=0.75, label="Test")
 	plt.xlabel("Time [days]")
-	plt.xticks(rotation='45')
+	#plt.xticks(rotation='45')
 	plt.ylabel("Normalized mean transparency")
 	plt.title(f"Predictions vs test   -   Fill {k}")
 	legend = plt.legend(['Predictions','Test'], title = "Legend")
 	plt.savefig(f"/home/marta/python/7-LSTM_prova2/Per_fill/Fill_{k}.pdf")
+	plt.gcf().autofmt_xdate()
 	plt.show()
+
+#plt.gca().xaxis.set_major_formatter(formatter)
+#plt.gca().xaxis.set_major_locator(locator)
+fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(6, 4))
+
+# plot fill 1:
+num_fill = 6315
+new_df = dataframe[dataframe.fill_num == num_fill]
+#lims = np.datetime64(new_df.time)
+axs[0, 0].set_title(f"Predictions vs test   -   Fill {num_fill}")
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(locator)
+axs[0, 0].plot(new_df.time, new_df.predictions, ".b-", markersize=3, linewidth=0.75, label="Predictions")
+axs[0, 0].plot(new_df.time, new_df.test, ".g-", markersize=3, linewidth=0.75, label="Test")
+#axs[0, 0].set_xlim(lims[axs[0, 0]])
+plt.gcf().autofmt_xdate()
+#axs[0, 0].xticks(new_df.time)
+axs[0, 0].set_xlabel("Time [days]")
+axs[0, 0].set_ylabel("Normalized mean transparency")
+axs[0, 0].legend(['Predictions','Test'], title = "Legend")
+
+#plt.gca().xaxis.set_major_formatter(formatter)
+#plt.gca().xaxis.set_major_locator(locator)
+#plt.gcf().autofmt_xdate()
+
+# plot fill 2:
+num_fill = 6317
+new_df = dataframe[dataframe.fill_num == num_fill]
+#lims = np.datetime64(new_df.time)
+axs[0, 1].set_title(f"Predictions vs test   -   Fill {num_fill}")
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(locator)
+axs[0, 1].plot(new_df.time, new_df.predictions, ".b-", markersize=3, linewidth=0.75, label="Predictions")
+axs[0, 1].plot(new_df.time, new_df.test, ".g-", markersize=3, linewidth=0.75, label="Test")
+#axs[0, 1].set_xlim(lims[axs[0, 1]])
+plt.gcf().autofmt_xdate()
+#axs[0, 1].xticks(new_df.time)
+axs[0, 1].set_xlabel("Time [days]")
+axs[0, 1].set_ylabel("Normalized mean transparency")
+axs[0, 1].legend(['Predictions','Test'], title = "Legend")
+
+# plot fill 3:
+num_fill = 6323
+new_df = dataframe[dataframe.fill_num == num_fill]
+#lims = np.datetime64(new_df.time)
+axs[1, 0].set_title(f"Predictions vs test   -   Fill {num_fill}")
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(locator)
+axs[1, 0].plot(new_df.time, new_df.predictions, ".b-", markersize=3, linewidth=0.75, label="Predictions")
+axs[1, 0].plot(new_df.time, new_df.test, ".g-", markersize=3, linewidth=0.75, label="Test")
+#axs[1, 0].set_xlim(lims[axs[1, 0]])
+plt.gcf().autofmt_xdate()
+#axs[1, 0].xticks(new_df.time)
+axs[1, 0].set_xlabel("Time [days]")
+axs[1, 0].set_ylabel("Normalized mean transparency")
+axs[1, 0].legend(['Predictions','Test'], title = "Legend")
+
+# plot fill 4:
+num_fill = 6343
+new_df = dataframe[dataframe.fill_num == num_fill]
+#lims = np.datetime64(new_df.time)
+axs[1, 1].set_title(f"Predictions vs test   -   Fill {num_fill}")
+plt.gca().xaxis.set_major_formatter(formatter)
+plt.gca().xaxis.set_major_locator(locator)
+axs[1, 1].plot(new_df.time, new_df.predictions, ".b-", markersize=3, linewidth=0.75, label="Predictions")
+axs[1, 1].plot(new_df.time, new_df.test, ".g-", markersize=3, linewidth=0.75, label="Test")
+#axs[1, 1].set_xlim(lims[axs[1, 1]])
+plt.gcf().autofmt_xdate()
+#axs[1, 1].xticks(new_df.time)
+axs[1, 1].set_xlabel("Time [days]")
+axs[1, 1].set_ylabel("Normalized mean transparency")
+axs[1, 1].legend(['Predictions','Test'], title = "Legend")
+
+plt.tight_layout()
+
+plt.savefig(f"/home/marta/python/9-Grafici utili/Predictions_fill.pdf")
+plt.show()
