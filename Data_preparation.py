@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
 
 # importo il file csv e creo il dataframe dati
 df_dati= pd.read_csv(r"/home/marta/python/fill_metadata_2017_10min.csv", usecols = [0,1,2,3,4,5,6,7,8])
@@ -12,7 +13,10 @@ df_dati=df_dati.drop(df_dati[df_dati.in_fill==0].index)
 #fill = 5872
 #df_dati=df_dati.drop(df_dati[df_dati.fill_num!=fill].index)
 # converto il tempo dal formato timestamp a giorni
-df_dati.time=(df_dati.time/86400)-17309
+#df_dati.time = [datetime.datetime.fromtimestamp(ts) for ts in df_dati.time]
+#print(date)
+#df_dati.time
+#df_dati.time=(df_dati.time/86400)-17309
 # escludo i dati dei fill non buoni
 escludi = list()
 escludi = [5697, 5698, 5699, 5704, 5710, 5718, 5719, 5722, 5733, 5736, 5738, 5739, 5740, 5746, 5749, 5822, 5824, 5825,
@@ -60,15 +64,14 @@ for k in (fill_nums):
     new_df.trasparenza = new_df.trasparenza / massimo_trasp
     #new_df.trasparenza = (new_df.trasparenza - minimo_trasp) / (massimo_trasp - minimo_trasp)
     dataframe = dataframe.append(new_df, ignore_index=True)
-    #df=df.append(dfNew,ignore_index=True)
-    #df_dati.trasparenza = new_df.trasparenza
-    #print(new_df)
 
 # stampo il df dati
 #print("df_dati")
 #print(df_dati)
 print("dataframe")
 print(dataframe)
+
+dataframe.to_csv('/home/marta/python/5-Correlazioni/correlazioni.csv')
 
 #scalo a mano tutti i dati tranne la trasparenza
 massimo = dataframe['time_in_fill'].max()
@@ -95,9 +98,9 @@ massimo = dataframe['lumi_inst'].max()
 minimo = dataframe['lumi_inst'].min()
 dataframe.lumi_inst = (dataframe.lumi_inst - minimo) / (massimo - minimo)
 
-massimo = dataframe['time'].max()
+"""massimo = dataframe['time'].max()
 minimo = dataframe['time'].min()
-dataframe.time = (dataframe.time - minimo) / (massimo - minimo)
+dataframe.time = (dataframe.time - minimo) / (massimo - minimo)"""
 
 plt.scatter(dataframe.time, dataframe.trasparenza)
 plt.title("Trasparenza")
@@ -146,6 +149,8 @@ time.drop(['trasparenza'], axis = 1, inplace = True)
 print("time")
 print(time)
 time.set_index('time', drop = False, inplace = True)
+#time.time = [datetime.datetime.fromtimestamp(ts) for ts in time.time]
+#time.index = [datetime.datetime.fromtimestamp(ts) for ts in time.index]
 print("time")
 print(time)
 time.to_csv('/home/marta/python/7-LSTM_prova2/time.csv')
@@ -163,6 +168,7 @@ fill_n.drop(['lumi_last_fill'], axis = 1, inplace = True)
 fill_n.drop(['trasparenza'], axis = 1, inplace = True)
 #time.drop(['trasp_preced'], axis = 1, inplace = True)
 fill_n.set_index('time', drop = True, inplace = True)
+#fill_n.index = [datetime.datetime.fromtimestamp(ts) for ts in fill_n.index]
 print("fill_n")
 print(fill_n)
 fill_n.to_csv('/home/marta/python/7-LSTM_prova2/fill_n.csv')
