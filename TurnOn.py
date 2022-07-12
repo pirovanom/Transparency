@@ -14,44 +14,15 @@ df = pd.read_csv('/home/marta/python/7-LSTM_prova2/output.csv', header=0, index_
 # creo dei vettori con i dati di test e con le predizioni e li trasformo in numpy array
 test = df['test']
 predictions = df['predictions']
-"""lumi_inst = df['lumi_inst']
-lumi_int = df['lumi_int']
-lumi_in_fill = df['lumi_in_fill']"""
 
 test = test.to_numpy()
 predictions = predictions.to_numpy()
-"""lumi_inst = lumi_inst.to_numpy()
-lumi_in_fill = lumi_in_fill.to_numpy()"""
-
-
-"""def transp_func(data,a,b,c,d,e,f):
-    x = data[0]
-    y = data[1]
-    y_0 = data[2]
-    return (a*np.exp(-b*x)+(1-a)*np.exp(c*x))*(d*np.exp(-e*(y-y_0))+(1-d)*np.exp(f*(y-y_0)))
-
-
-def transp_func_2(data,a,b,c,d,e,f):
-    x = data[0]
-    y = data[1]
-    y_0 = data[2]
-    return (a*np.exp(-b*x)+(1-a)*np.exp(c*x))*(d*np.exp(-e*y)+(1-d)*np.exp(f*y))/(d*np.exp(-e*y_0)+(1-d)*np.exp(f*y_0))
-
-#df = df[(df.lumi_inst >= 0.0001*1e9) & (df.lumi_inst <= 0.0004*1e9) & (df.lumi_in_fill >= 0.1*1e9)]
-
-par_1, pcov_1 = curve_fit(transp_func, [df.lumi_in_fill*(1e-9), df.lumi_inst*(1e-9), lumi_inst*(1e-9)], trasparenza, maxfev=5000)
-par_2, pcov_2 = curve_fit(transp_func_2, [df.lumi_in_fill*(1e-9), df.lumi_inst*(1e-9), lumi_inst*(1e-9)], trasparenza, maxfev=5000)
-
-nbin = 600
-minimo = 0
-massimo = 60
-threshold = 30
-delta_value = (massimo-minimo)/nbin
-nEvents = 1000"""
 
 #definisco i parametri importanti
 e_max=32
 e_min=28
+num_eventi = len(predictions)
+print("numero totale di eventi:  ", num_eventi)
 bin_desiderati = 200
 larg=(e_max-e_min)/bin_desiderati
 num_bin = int((e_max - e_min)/ larg)
@@ -102,12 +73,8 @@ df_result.cont_test = pd.DataFrame(cont_test)
 print(df_result)
 
 # scalo i conteggi per portarli tra 0 e 1
-massimo_pred = df_result['cont_pred'].max()
-df_result.cont_pred = df_result.cont_pred / massimo_pred
-massimo_test = df_result['cont_test'].max()
-df_result.cont_test = df_result.cont_test / massimo_test
-#print("massimo_pred: ", massimo_pred)
-#print("massimo_test: ", massimo_test)
+df_result.cont_pred = df_result.cont_pred / num_eventi
+df_result.cont_test = df_result.cont_test / num_eventi
 # rinomino le colonne del daataframe per renderlo più comprensibile
 df_result.set_axis(['energia', 'cont_pred', 'cont_test'], axis='columns', inplace=True)
 df_result.to_csv('/home/marta/python/10-TurnOn/turn_on.csv')
@@ -117,11 +84,11 @@ df_result.to_csv('/home/marta/python/10-TurnOn/turn_on.csv')
 plt.plot(df_result.energia, df_result.cont_pred, ".b-", label = "Predictions")
 plt.plot(df_result.energia, df_result.cont_test, ".g-", label = "Test")
 #plt.plot(new_df.time, new_df.predictions, ".b-", markersize=3, linewidth=0.75, label="Predictions")
-plt.xlabel("Energia [GeV]")
-plt.ylabel(f"Percentage of events with measured energy greater than {soglia} GeV")
+plt.xlabel("Energy [GeV]")
+plt.ylabel(f"Fraction of events with measured energy greater than {soglia} GeV")
 plt.title(f"Trigger efficiency - All fill")
 legend = plt.legend(['Predictions', 'Test'], title = "Legend")
-plt.savefig("/home/marta/python/10-TurnOn/TurnOn_TuttiIFill.png")
+plt.savefig("/home/marta/python/10-TurnOn/TurnOn_TuttiIFill.pdf")
 plt.show()
 
 
@@ -136,6 +103,8 @@ for f in (fill_nums):
     predictions = new_df['predictions']
     test = test.to_numpy()
     predictions = predictions.to_numpy()
+    num_eventi = len(predictions)
+    print(num_eventi)
     # riempio il vettore conteggi_test con i conteggi a partire dalla trasparenza di test
     cont_test = list()
     for i in range(0, num_bin):
@@ -164,24 +133,17 @@ for f in (fill_nums):
     df_result.cont_test = pd.DataFrame(cont_test)
     #print(df_result)
     # scalo i conteggi per portarli tra 0 e 1
-    massimo_pred = df_result['cont_pred'].max()
-    df_result.cont_pred = df_result.cont_pred / massimo_pred
-    massimo_test = df_result['cont_test'].max()
-    df_result.cont_test = df_result.cont_test / massimo_test
-    #print("massimo_pred: ", massimo_pred)
-    #print("massimo_test: ", massimo_test)
+    df_result.cont_pred = df_result.cont_pred / num_eventi
+    df_result.cont_test = df_result.cont_test / num_eventi
     # rinomino le colonne del daataframe per renderlo più comprensibile
     df_result.set_axis(['energia', 'cont_pred', 'cont_test'], axis='columns', inplace=True)
     #print(df)
     #plot delle turn on curve per tutti i fill
     plt.plot(df_result.energia, df_result.cont_pred, ".b-", label = "Predictions")
     plt.plot(df_result.energia, df_result.cont_test, ".g-", label = "Test")
-    plt.xlabel("Energia [GeV]")
-    plt.ylabel(f"Percentage of events with measured energy greater than {soglia} GeV")
+    plt.xlabel("Energy [GeV]")
+    plt.ylabel(f"Fraction of events with measured energy greater than {soglia} GeV")
     plt.title(f"Trigger efficiency - Fill {f}")
     legend = plt.legend(['Predictions', 'Test'], title = "Legend")
-    plt.savefig(f"/home/marta/python/10-TurnOn/PerFill/TurnOn_Fill_{f}.png")
+    plt.savefig(f"/home/marta/python/10-TurnOn/PerFill/TurnOn_Fill_{f}.pdf")
     plt.show()
-
-    
-  
