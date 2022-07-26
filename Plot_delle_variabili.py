@@ -1,4 +1,5 @@
 # DESCRIZIONE: questo codice fa il plot di tutte le variabili a disposizione. Mostra come evolvono nel tempo.
+# NOTA: per far evolvere le variabili rispetto alla trasparenza e non rispetto al tempo è sufficiente decommentare le righe 59 e 76
 
 from pandas import read_csv
 import matplotlib.pyplot as plt
@@ -55,6 +56,7 @@ for group in groups_1:
 	plt.gca().xaxis.set_major_formatter(formatter)
 	plt.gca().xaxis.set_major_locator(locator)
 	plt.scatter(df.time, values[:, group],  color=colors[i])
+	#plt.scatter(df.transparency, values[:, group],  color=colors[i])
 	plt.gcf().autofmt_xdate()
 	plt.title(df.columns[group], y=0.5, loc='right')
 	i += 1
@@ -71,6 +73,7 @@ for group in groups_2:
 	plt.gca().xaxis.set_major_formatter(formatter)
 	plt.gca().xaxis.set_major_locator(locator)
 	plt.scatter(df.time, values[:, group],  color=colors[i+4])
+	#plt.scatter(df.transparency, values[:, group],  color=colors[i+4])
 	plt.gcf().autofmt_xdate()
 	plt.title(df.columns[group], y=0.5, loc='right')
 	i += 1
