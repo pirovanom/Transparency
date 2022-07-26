@@ -4,7 +4,7 @@ In questo repository sono contenuti i codici per fare predizioni sulla trasparen
 
 fill_metadata_2017_10min.csv   +   iRing25new.npy     --->     Data_preparation.py     --->     input_data.csv   +   fill_n.csv   +   time.csv 
 
-input_data.csv   +   fill_n.csv   +   time.csv     --->     LSTM.py     --->     
+input_data.csv   +   fill_n.csv   +   time.csv     --->     LSTM.py     --->     output.csv
 
 output.csv     --->     TurnOn_pesati_per_luminosita.py     --->     turn_on_lumi.csv
 
